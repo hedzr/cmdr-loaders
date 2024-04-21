@@ -2,6 +2,8 @@
 
 Local configration file loaders for various file formats, such as YAML, TOML, HCL, and much more.
 
+This is an addon libray especially for [cmdr/v2](https://github.com/hedzr/cmdr).
+
 ```go
 package main
 
