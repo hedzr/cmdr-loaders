@@ -10,11 +10,31 @@ import (
 
 	errorsv3 "gopkg.in/hedzr/errors.v3"
 
+	"github.com/hedzr/evendeep"
+	"github.com/hedzr/evendeep/diff"
 	"github.com/hedzr/store"
 
 	"github.com/hedzr/cmdr/v2/cli"
 	"github.com/hedzr/cmdr/v2/cli/worker"
 )
+
+func TestDiff(t *testing.T) {
+	a, b := 1, int64(1)
+	delta, equal := evendeep.DeepDiff(a, b)
+	t.Logf("delta: %v, equal: %v", delta, equal) // ""
+
+	delta, equal = evendeep.DeepDiff([]int{3, 0, 9}, []int{9, 3, 0}, diff.WithSliceOrderedComparison(true))
+	t.Logf("delta: %v, equal: %v", delta, equal) // ""
+
+	delta, equal = evendeep.DeepDiff([]int{3, 0, 9}, []int{9, 3, 0}, diff.WithSliceOrderedComparison(false))
+	t.Logf("delta: %v, equal: %v", delta, equal) // ""
+
+	delta, equal = evendeep.DeepDiff([]int{3, 0}, []int{9, 3, 0}, diff.WithSliceOrderedComparison(true))
+	t.Logf("delta: %v", delta) // "added: [0] = 9\n"
+
+	delta, equal = evendeep.DeepDiff([]int{3, 0}, []int{9, 3, 0})
+	t.Logf("delta: %v", delta)
+}
 
 func TestWorkerS_Pre(t *testing.T) {
 	app, ww := cleanApp(t,

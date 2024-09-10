@@ -207,6 +207,7 @@ func (w *conffileloader) initOnce() {
 			"primary": {
 				{Folder: "/etc/$APP", Recursive: true, Watch: true},
 				{Folder: "/usr/local/etc/$APP", Recursive: true, Watch: true},
+				{Folder: "/opt/homebrew/etc/$APP", Recursive: true, Watch: true},
 				{Folder: "./ci/etc/$APP", Recursive: true, Watch: true},
 			},
 			// Secondary configs, which may make some patches on the baseline if necessary.
