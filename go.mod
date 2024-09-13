@@ -1,8 +1,6 @@
 module github.com/hedzr/cmdr-loaders
 
-go 1.21.0
-
-toolchain go1.22.7
+go 1.22.7
 
 // replace github.com/hedzr/cmdr/v2 => ../cmdr
 
