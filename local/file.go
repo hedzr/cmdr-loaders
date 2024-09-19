@@ -23,6 +23,23 @@ import (
 
 const confSubFolderName = "conf.d"
 
+// NewConfigFileLoader returns a new instance to load local config files.
+//
+// For example,
+//
+//	app = cmdr.New().
+//	    Info("demo-app", "0.3.1").
+//	    Author("your-name")
+//	if err := app.Run(
+//	    cmdr.WithStore(store.New()),
+//	    cmdr.WithExternalLoaders(
+//	      local.NewConfigFileLoader(),
+//	      local.NewEnvVarLoader(),
+//	    ),
+//	    cmdr.WithForceDefaultAction(true), // true for debug in developing time
+//	); err != nil {
+//	    logz.Error("Application Error:", "err", err)
+//	}
 func NewConfigFileLoader(opts ...Opt) *conffileloader {
 	s := &conffileloader{confDFolderName: confSubFolderName}
 	s.initOnce()
@@ -191,7 +208,19 @@ func (w *conffileloader) loadSubDir(root string, app cli.App) (found bool, err e
 	return
 }
 
+// SetAlternativeConfigFile adds a user-specified config file into
+// alternative list.
+//
+// Generally user can specify a prefer config file from command-line
+// by option `--config file'.
+//
+// The point is, an alternative config file is writeable: its content
+// will be refreshed at end of invocation on a cmdr-app. The feature
+// is called 'write-back' in cmdr.
+//
+// By this token, there is only one alternative config file in the list.
 func (w *conffileloader) SetAlternativeConfigFile(file string) {
+	// w.folderMap["alternative"] = append(w.folderMap["alternative"], &Item{Folder: file, Watch: true})
 	w.folderMap["alternative"] = []*Item{{Folder: file, Watch: true}}
 }
 

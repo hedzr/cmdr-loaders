@@ -10,6 +10,27 @@ import (
 	"github.com/hedzr/cmdr/v2/cli"
 )
 
+// NewEnvVarLoader return a new instance to load current
+// executive environment.
+//
+// The key-values in environment will be loaded into Store as
+// key-value pairs.
+//
+// For example,
+//
+//	app = cmdr.New().
+//	    Info("demo-app", "0.3.1").
+//	    Author("your-name")
+//	if err := app.Run(
+//	    cmdr.WithStore(store.New()),
+//	    cmdr.WithExternalLoaders(
+//	      local.NewConfigFileLoader(),
+//	      local.NewEnvVarLoader(),
+//	    ),
+//	    cmdr.WithForceDefaultAction(true), // true for debug in developing time
+//	); err != nil {
+//	    logz.Error("Application Error:", "err", err)
+//	}
 func NewEnvVarLoader() *envvarloader {
 	return &envvarloader{}
 }

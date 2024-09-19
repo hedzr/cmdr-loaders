@@ -15,7 +15,6 @@ import (
 	"github.com/hedzr/store"
 
 	"github.com/hedzr/cmdr/v2/cli"
-	"github.com/hedzr/cmdr/v2/cli/worker"
 )
 
 func TestDiff(t *testing.T) {
@@ -57,6 +56,7 @@ func TestWorkerS_Pre(t *testing.T) {
 	// ww.setArgs([]string{"--debug"})
 	// ww.Config.Store = store.New()
 	// ww.Loaders = []cli.Loader{NewConfigFileLoader(), NewEnvVarLoader()}
+
 	_ = app
 
 	err := ww.Run(
@@ -230,7 +230,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		// ~~tree
 		{args: "ms t t --tree", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			errParsed := runner.Error()
-			if errorsv3.Is(errParsed, worker.ErrUnmatchedFlag) {
+			if errorsv3.Is(errParsed, cli.ErrUnmatchedFlag) {
 				t.Log("ErrUnmatchedFlag FOUND, that's expecting.")
 			}
 			return errParsed
@@ -239,7 +239,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		// ~~tree 2
 		{args: "ms t t ~~tree", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			errParsed := runner.Error()
-			if errorsv3.Is(errParsed, worker.ErrUnmatchedFlag) {
+			if errorsv3.Is(errParsed, cli.ErrUnmatchedFlag) {
 				t.Fatal("ErrUnmatchedFlag FOUND, that's NOT expecting.")
 			}
 			if f := getMatchedFlag(extras, "tree"); f != nil {
