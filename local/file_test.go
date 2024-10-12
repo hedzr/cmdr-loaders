@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"reflect"
@@ -58,10 +59,10 @@ func TestWorkerS_Pre(t *testing.T) {
 	// ww.Loaders = []cli.Loader{NewConfigFileLoader(), NewEnvVarLoader()}
 
 	_ = app
-
-	err := ww.Run(
-		cli.WithTasksBeforeParse(func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) {
-			root.SelfAssert()
+	ctx := context.Background()
+	err := ww.Run(ctx,
+		cli.WithTasksBeforeParse(func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) {
+			cmd.Root().SelfAssert()
 			t.Logf("root.SelfAssert() passed. runner = %v", runner)
 			return
 		}),
@@ -83,8 +84,8 @@ func TestWorkerS_Pre_v1(t *testing.T) {
 	// ww.Config.Store = store.New()
 	// ww.Loaders = []cli.Loader{loaders.NewConfigFileLoader(), loaders.NewEnvVarLoader()}
 	_ = app
-
-	err := ww.Run()
+	ctx := context.Background()
+	err := ww.Run(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,15 +103,16 @@ func TestWorkerS_Pre_v3(t *testing.T) {
 	// ww.Config.Store = store.New()
 	// ww.Loaders = []cli.Loader{loaders.NewConfigFileLoader(), loaders.NewEnvVarLoader()}
 	_ = app
-
-	err := ww.Run()
+	ctx := context.Background()
+	err := ww.Run(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestWorkerS_Parse(t *testing.T) { //nolint:revive
-	aTaskBeforeRun := func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { return } //nolint:revive
+	aTaskBeforeRun := func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { return } //nolint:revive
+	ctx := context.Background()
 
 	for i, c := range []struct {
 		args     string
@@ -118,7 +120,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		opts     []cli.Opt
 	}{
 		{},
-		{args: "m unk snd cool", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "m unk snd cool", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			runner.DumpErrors(os.Stdout)
 			errParsed := runner.Error()
 			if !regexp.MustCompile(`UNKNOWN (Command|Flag) FOUND:?`).MatchString(errParsed.Error()) {
@@ -127,7 +129,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 			return /* errParsed */
 		}, opts: []cli.Opt{cli.WithUnmatchedAsError(true)}},
 
-		{args: "m snd -n -wn cool fog --pp box", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "m snd -n -wn cool fog --pp box", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			errParsed := runner.Error()
 			if !regexp.MustCompile(`UNKNOWN (Command|Flag) FOUND:?`).MatchString(errParsed.Error()) {
 				t.Log("expect 'UNKNOWN Flag FOUND' error, but not matched.") // "--pp"
@@ -139,7 +141,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		}},
 
 		// general commands and flags
-		{args: "jump to --full -f --dry-run", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "jump to --full -f --dry-run", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			hitTest(runner, extras, "full", 2)
 			hitTest(runner, extras, "dry-run", 1)
 			errParsed := runner.Error()
@@ -147,7 +149,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		}},
 		// compact flags
 		{args: "-qvqDq gen --debug sh --zsh -b -Dwmann --dry-run",
-			verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+			verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 				hitTest(runner, extras, "quiet", 3)
 				hitTest(runner, extras, "debug", 3)
 				hitTest(runner, extras, "verbose", 1)
@@ -159,14 +161,14 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 
 		// general, unknown cmd/flg errors
 		{args: "m snd --help"},
-		{args: "m unk snd cool", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "m unk snd cool", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			errParsed := runner.Error()
 			if !regexp.MustCompile(`UNKNOWN (Command|Flag) FOUND:?`).MatchString(errParsed.Error()) {
 				t.Log("expect 'UNKNOWN Command FOUND' error, but not matched.") // "unk"
 			}
 			return /* errParsed */
 		}, opts: []cli.Opt{cli.WithUnmatchedAsError(true)}},
-		{args: "m snd -n -wn cool fog --pp box", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "m snd -n -wn cool fog --pp box", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			errParsed := runner.Error()
 			if !regexp.MustCompile(`UNKNOWN (Command|Flag) FOUND:?`).MatchString(errParsed.Error()) {
 				t.Log("expect 'UNKNOWN Flag FOUND' error, but not matched.") // "--pp"
@@ -178,7 +180,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		}},
 
 		// headLike
-		{args: "server start -f -129", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "server start -f -129", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			hitTest(runner, extras, "foreground", 1)
 			hitTest(runner, extras, "head", 1)
 			hitTest(runner, extras, "tail", 0)
@@ -188,7 +190,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		}},
 
 		// toggle group
-		{args: "generate shell --bash --zsh -p", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "generate shell --bash --zsh -p", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			if f := getMatchedFlag(extras, "shell"); f != nil {
 				assertEqual(t, f.MatchedTG().MatchedTitle, "powershell")
 			}
@@ -197,14 +199,14 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		}},
 
 		// valid args
-		{args: "server start -e apple -e zig", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "server start -e apple -e zig", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			valTest(runner, extras, "enum", "zig")
 			errParsed := runner.Error()
 			return errParsed
 		}},
 
 		// parsing slice (-cr foo,bar,noz), compact flag with value (-mmt3)
-		{args: "ms t modify -2 -cr foo,bar,noz -nfool -mmi3", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "ms t modify -2 -cr foo,bar,noz -nfool -mmi3", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			hitTest(runner, extras, "money", 1)
 			valTest(runner, extras, "both", true)
 			valTest(runner, extras, "clear", true)
@@ -217,7 +219,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 
 		// parsing slice (-cr foo,bar,noz), compact flag with value (-mmt3)
 		// merge/append to slice
-		{args: "ms t modify -2 -cr foo,bar,noz -n fool -mmr 1", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "ms t modify -2 -cr foo,bar,noz -n fool -mmr 1", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			hitTest(runner, extras, "money", 1)
 			valTest(runner, extras, "both", true)
 			valTest(runner, extras, "clear", true)
@@ -228,7 +230,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		}},
 
 		// ~~tree
-		{args: "ms t t --tree", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "ms t t --tree", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			errParsed := runner.Error()
 			if errorsv3.Is(errParsed, cli.ErrUnmatchedFlag) {
 				t.Log("ErrUnmatchedFlag FOUND, that's expecting.")
@@ -237,7 +239,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		}},
 
 		// ~~tree 2
-		{args: "ms t t ~~tree", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "ms t t ~~tree", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			errParsed := runner.Error()
 			if errorsv3.Is(errParsed, cli.ErrUnmatchedFlag) {
 				t.Fatal("ErrUnmatchedFlag FOUND, that's NOT expecting.")
@@ -252,7 +254,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 			return errParsed
 		}},
 
-		{args: "ms t t -K -2 -cun foo,bar,noz", verifier: func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) { //nolint:revive
+		{args: "ms t t -K -2 -cun foo,bar,noz", verifier: func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) { //nolint:revive
 			hitTest(runner, extras, "insecure", 1)
 			valTest(runner, extras, "insecure", true)
 			valTest(runner, extras, "both", true)
@@ -284,10 +286,10 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 			cli.WithArgs(append([]string{"demo-app"}, strings.Split(c.args, " ")...)...),
 			cli.WithHelpScreenWriter(&discardP{}),
 
-			cli.WithTasksBeforeParse(func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) {
+			cli.WithTasksBeforeParse(func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) {
 				return
 			}, c.verifier),
-			cli.WithTasksBeforeRun(func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) {
+			cli.WithTasksBeforeRun(func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) {
 				// err = runner.Error()
 				return
 			}, aTaskBeforeRun),
@@ -298,7 +300,7 @@ func TestWorkerS_Parse(t *testing.T) { //nolint:revive
 		// ww.setArgs(append([]string{app.Name()}, strings.Split(c.args, " ")...))
 		// ww.tasksAfterParse = []taskAfterParse{c.verifier}
 		// ww.Config.TasksBeforeRun = []cli.Task{aTaskBeforeRun}
-		err := ww.Run(c.opts...) // withTasksBeforeRun(taskBeforeRun),withTasksAfterParse(c.verifier))
+		err := ww.Run(ctx, c.opts...) // withTasksBeforeRun(taskBeforeRun),withTasksAfterParse(c.verifier))
 		// err := app.Run()
 		if err != nil {
 			_ = app
@@ -317,7 +319,8 @@ func argsAre(runner cli.Runner, extras []any, list ...string) {
 
 func hitTest(runner cli.Runner, extras []any, longTitle string, times int) {
 	cc, _ := getLastCmd(extras), runner
-	if f := cc.FindFlagBackwards(longTitle); f == nil {
+	ctx := context.Background()
+	if f := cc.FindFlagBackwards(ctx, longTitle); f == nil {
 		panic(fmt.Sprintf("can't found flag: %q", longTitle))
 	} else if f.GetTriggeredTimes() != times {
 		panic(fmt.Sprintf("expect hit times is %d but got %d (for flag %v)", times, f.GetTriggeredTimes(), f))
@@ -326,7 +329,8 @@ func hitTest(runner cli.Runner, extras []any, longTitle string, times int) {
 
 func valTest(runner cli.Runner, extras []any, longTitle string, val any) {
 	cc, _ := getLastCmd(extras), runner
-	if f := cc.FindFlagBackwards(longTitle); f == nil {
+	ctx := context.Background()
+	if f := cc.FindFlagBackwards(ctx, longTitle); f == nil {
 		panic(fmt.Sprintf("can't found flag: %q", longTitle))
 	} else if !reflect.DeepEqual(f.DefaultValue(), val) {
 		panic(fmt.Sprintf("expect flag's value is '%v' but got '%v' (for flag %v)", val, f.DefaultValue(), f))

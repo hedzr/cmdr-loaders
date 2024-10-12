@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -15,15 +16,15 @@ func cleanApp(t *testing.T, opts ...cli.Opt) (app cli.App, ww cli.Runner) { //no
 		// cli.WithHelpScreenWriter(os.Stdout),
 		cli.WithDebugScreenWriter(os.Stdout),
 		cli.WithForceDefaultAction(true),
-		cli.WithTasksBeforeParse(func(root *cli.RootCommand, runner cli.Runner, extras ...any) (err error) {
-			_, _, _ = root, runner, extras
+		cli.WithTasksBeforeParse(func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) {
+			_, _, _ = cmd, runner, extras
 			return
 		}),
 	)
 	app = buildDemoApp(opts...)
 	ww = postBuild(app)
-	if r, ok := ww.(interface{ InitGlobally() }); ok {
-		r.InitGlobally()
+	if r, ok := ww.(interface{ InitGlobally(ctx context.Context) }); ok {
+		r.InitGlobally(context.TODO())
 	}
 	if !ww.Ready() {
 		t.Fatalf("not ready")
@@ -73,7 +74,7 @@ func buildDemoApp(opts ...cli.Opt) (app cli.App) { //nolint:revive
 		Examples(``).
 		Deprecated(``).
 		Hidden(false).
-		OnAction(func(cmd *cli.Command, args []string) (err error) { //nolint:revive
+		OnAction(func(ctx context.Context, cmd *cli.Command, args []string) (err error) { //nolint:revive
 			return // handling command action here
 		})
 
@@ -83,11 +84,11 @@ func buildDemoApp(opts ...cli.Opt) (app cli.App) { //nolint:revive
 		Build()
 	b1.Build()
 
-	b.AddFlg(func(b cli.FlagBuilder) {
-		b.Default(false).
-			Titles("empty", "e").
-			Description("empty command")
-	})
+	b.Flg("empty", "e").
+		With(func(b cli.FlagBuilder) {
+			b.Default(false).
+				Description("empty command")
+		})
 
 	b.Build()
 
@@ -157,7 +158,7 @@ func postBuild(app cli.App, args ...string) (ww cli.Runner) { //nolint:revive,un
 			SetRoot(root *cli.RootCommand, args []string)
 		}); ok {
 			if r, ok := app.(interface{ Root() *cli.RootCommand }); ok {
-				r.Root().EnsureTree(app, r.Root())
+				r.Root().EnsureTree(context.TODO(), app, r.Root())
 				ww1.SetRoot(r.Root(), app.Args())
 				_ = args
 			}
