@@ -16,7 +16,7 @@ func cleanApp(t *testing.T, opts ...cli.Opt) (app cli.App, ww cli.Runner) { //no
 		// cli.WithHelpScreenWriter(os.Stdout),
 		cli.WithDebugScreenWriter(os.Stdout),
 		cli.WithForceDefaultAction(true),
-		cli.WithTasksBeforeParse(func(ctx context.Context, cmd *cli.Command, runner cli.Runner, extras ...any) (err error) {
+		cli.WithTasksBeforeParse(func(ctx context.Context, cmd cli.Cmd, runner cli.Runner, extras ...any) (err error) {
 			_, _, _ = cmd, runner, extras
 			return
 		}),
@@ -74,7 +74,7 @@ func buildDemoApp(opts ...cli.Opt) (app cli.App) { //nolint:revive
 		Examples(``).
 		Deprecated(``).
 		Hidden(false).
-		OnAction(func(ctx context.Context, cmd *cli.Command, args []string) (err error) { //nolint:revive
+		OnAction(func(ctx context.Context, cmd cli.Cmd, args []string) (err error) { //nolint:revive
 			return // handling command action here
 		})
 
@@ -158,7 +158,9 @@ func postBuild(app cli.App, args ...string) (ww cli.Runner) { //nolint:revive,un
 			SetRoot(root *cli.RootCommand, args []string)
 		}); ok {
 			if r, ok := app.(interface{ Root() *cli.RootCommand }); ok {
-				r.Root().EnsureTree(context.TODO(), app, r.Root())
+				if cx, ok := r.Root().Cmd.(*cli.CmdS); ok {
+					cx.EnsureTreeAlways(context.TODO(), app, r.Root())
+				}
 				ww1.SetRoot(r.Root(), app.Args())
 				_ = args
 			}
