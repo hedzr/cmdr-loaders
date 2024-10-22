@@ -1,5 +1,9 @@
 # Loaders for cmdr/v2
 
+![Go](https://github.com/hedzr/cmdr-loaders/workflows/Go/badge.svg)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/hedzr/cmdr-loaders)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hedzr/cmdr-loaders.svg?label=release)](https://github.com/hedzr/cmdr-loaders/releases)
+
 Local configration file loaders for various file formats, such as YAML, TOML, HCL, and much more.
 
 This is an addon libray especially for [cmdr/v2](https://github.com/hedzr/cmdr).
