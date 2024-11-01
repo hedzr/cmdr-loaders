@@ -37,12 +37,12 @@ func NewEnvVarLoader() *envvarloader {
 
 type envvarloader struct{}
 
-func (w *envvarloader) Load(app cli.App) (err error) {
+func (w *envvarloader) Load(ctx context.Context, app cli.App) (err error) {
 	conf := app.Store()
 	name := app.Name()
-	_, err = conf.Load(context.Background(),
+	_, err = conf.Load(ctx,
 		store.WithProvider(env.New(
-			env.WithStorePrefix("app.cmd"),
+			env.WithStorePrefix(conf.Prefix()),
 			env.WithPrefix(name+"_", name+"_"),
 			env.WithLowerCase(true),
 			env.WithUnderlineToDot(true),
