@@ -41,13 +41,13 @@ const confSubFolderName = "conf.d"
 //	    logz.Error("Application Error:", "err", err)
 //	}
 func NewConfigFileLoader(opts ...Opt) *conffileloader {
-	s := &conffileloader{confDFolderName: confSubFolderName}
-	s.initOnce()
+	s := &conffileloader{confDFolderName: confSubFolderName, dot: true, writeBack: true}
 	for _, opt := range opts {
 		if opt != nil {
 			opt(s)
 		}
 	}
+	s.initOnce()
 	return s
 }
 
@@ -65,10 +65,27 @@ func WithConfDFolderName(name string) Opt {
 	}
 }
 
+func WithAlternateDotPrefix(dotPrefix bool) Opt {
+	return func(s *conffileloader) {
+		s.dot = dotPrefix
+	}
+}
+
+func WithAlternateWriteBack(b bool) Opt {
+	return func(s *conffileloader) {
+		s.writeBack = b
+	}
+}
+
 type conffileloader struct {
 	folderMap       map[string][]*Item
 	suffixCodecMap  map[string]func() store.Codec
 	confDFolderName string
+
+	dot       bool
+	writeBack bool
+
+	loaded cli.LoadedSources
 }
 
 type Item struct {
@@ -81,10 +98,27 @@ type Item struct {
 	WriteBack        bool // write-back to "alternative config" file?
 	hit              bool // this item is valid and the config file loaded?
 	writeBackHandler writeBackHandler
+	concreteFile     string
+}
+
+type Loadable interface {
+	Load(ctx context.Context, app cli.App) (err error)
+}
+
+type SingleFileLoadable interface {
+	LoadFile(ctx context.Context, filename string, app cli.App) (err error)
 }
 
 type writeBackHandler interface {
 	Save(ctx context.Context) error
+}
+
+type QueryLoadedSources interface {
+	LoadedSources() cli.LoadedSources
+}
+
+func (w *conffileloader) LoadedSources() cli.LoadedSources {
+	return w.loaded
 }
 
 func (w *conffileloader) Save(ctx context.Context) (err error) {
@@ -98,22 +132,26 @@ func (w *conffileloader) Save(ctx context.Context) (err error) {
 	return
 }
 
-func (w *conffileloader) Load(app cli.App) (err error) {
+func (w *conffileloader) Load(ctx context.Context, app cli.App) (err error) {
+	if w.loaded == nil {
+		w.loaded = make(cli.LoadedSources)
+	}
+
 	// var conf = app.Store()
 
+	var found bool
 	for _, class := range []string{"primary", "secondary", "alternative"} {
 		for _, it := range w.folderMap[class] {
 			folderEx := os.ExpandEnv(it.Folder)
-			logz.Verbose("loading config files from Folder", "class", class, "Folder", it.Folder, "Folder-expanded", folderEx)
+			logz.VerboseContext(ctx, "loading config files from Folder", "class", class, "Folder", it.Folder, "Folder-expanded", folderEx)
 			if !dir.FileExists(folderEx) {
 				continue
 			}
 
-			var found bool
-			found, err = w.loadAppConfig(folderEx, it, app)
+			found, err = w.loadAppConfig(ctx, class, folderEx, it, app)
 
 			if root := path.Join(folderEx, w.confDFolderName); it.Recursive && found && dir.FileExists(root) {
-				found, err = w.loadSubDir(root, app)
+				found, err = w.loadSubDir(ctx, class, root, app)
 			}
 		}
 	}
@@ -123,22 +161,25 @@ func (w *conffileloader) Load(app cli.App) (err error) {
 	return
 }
 
-func (w *conffileloader) LoadFile(filename string, app cli.App) (err error) {
-	return w.loadConfigFile(filename, path.Ext(filename), &Item{Watch: true, WriteBack: false}, app)
+func (w *conffileloader) LoadFile(ctx context.Context, filename string, app cli.App) (err error) {
+	return w.loadConfigFile(ctx, filename, path.Ext(filename), &Item{Watch: true, WriteBack: false}, app)
 }
 
-func (w *conffileloader) loadAppConfig(folderExpanded string, it *Item, app cli.App) (found bool, err error) {
+func (w *conffileloader) loadAppConfig(ctx context.Context, class, folderExpanded string, it *Item, app cli.App) (found bool, err error) {
 	rootCmd := app.RootCommand()
 
-	if file, _ := dir.IsRegularFile(folderExpanded); file {
-		err = w.loadConfigFile(folderExpanded, path.Ext(folderExpanded), it, app)
+	// if the folderExpanded is a regular file, load it directly
+	if isfile, _ := dir.IsRegularFile(folderExpanded); isfile {
+		err = w.loadConfigFile(ctx, folderExpanded, path.Ext(folderExpanded), it, app)
 		if err == nil {
 			found = true
-			logz.Verbose("config file loaded", "file", folderExpanded)
+			w.add(false, class, folderExpanded)
+			logz.VerboseContext(ctx, "config file loaded", "file", folderExpanded)
 		}
 		return
 	}
 
+	// or loop the files in this folder
 	err = dir.ForFileMax(folderExpanded, 0, 1,
 		func(depth int, dirName string, fi os.DirEntry) (stop bool, err error) {
 			baseName, ext, appName := dir.Basename(fi.Name()), dir.Ext(fi.Name()), rootCmd.AppName
@@ -149,25 +190,28 @@ func (w *conffileloader) loadAppConfig(folderExpanded string, it *Item, app cli.
 				return
 			}
 
-			logz.Verbose("loading config file", "dir", dirName, "file", fi.Name())
-			err = w.loadConfigFile(path.Join(dirName, fi.Name()), ext, it, app)
+			logz.VerboseContext(ctx, "loading config file", "dir", dirName, "file", fi.Name())
+			file := path.Join(dirName, fi.Name())
+			err = w.loadConfigFile(ctx, file, ext, it, app)
 			if err == nil {
-				logz.Verbose("config file loaded", "file", path.Join(dirName, fi.Name()))
+				logz.VerboseContext(ctx, "config file loaded", "file", file)
 				found, stop = true, true
+				w.add(false, class, file)
 			}
 			return
 		})
 	return
 }
 
-func (w *conffileloader) loadConfigFile(filename, ext string, it *Item, app cli.App) (err error) {
-	logz.Verbose("loading config file", "file", filename)
+func (w *conffileloader) loadConfigFile(ctx context.Context, filename, ext string, it *Item, app cli.App) (err error) {
+	logz.VerboseContext(ctx, "loading config file", "file", filename)
 	if strings.HasPrefix(ext, ".") {
 		ext = ext[1:]
 	}
 	if codec, ok := w.suffixCodecMap[ext]; ok {
 		var wr writeBackHandler
-		wr, err = app.Store().Load(context.Background(),
+		conf := app.Store()
+		wr, err = conf.Load(ctx,
 			// store.WithStorePrefix("app.yaml"),
 			// store.WithPosition("app"),
 			store.WithCodec(codec()),
@@ -175,32 +219,37 @@ func (w *conffileloader) loadConfigFile(filename, ext string, it *Item, app cli.
 				file.WithWatchEnabled(it.Watch),
 				file.WithWriteBackEnabled(it.WriteBack))),
 		)
-		if err == nil && it.WriteBack {
-			it.writeBackHandler = wr
-			it.hit = true
+		if err == nil {
+			if it.WriteBack {
+				it.writeBackHandler = wr
+				it.hit = true
+			}
+			it.concreteFile = filename
 		}
 	}
 	return
 }
 
-func (w *conffileloader) loadSubDir(root string, app cli.App) (found bool, err error) {
+func (w *conffileloader) loadSubDir(ctx context.Context, class, root string, app cli.App) (found bool, err error) {
 	err = dir.ForFile(root,
 		func(depth int, dirName string, fi os.DirEntry) (stop bool, err error) {
 			ext := dir.Ext(fi.Name())
 			if strings.HasPrefix(ext, ".") {
 				ext = ext[1:]
 			}
+
 			if codec, ok := w.suffixCodecMap[ext]; ok {
 				filename := path.Join(dirName, fi.Name())
-				_, err = app.Store().Load(context.Background(),
+				_, err = app.Store().Load(ctx,
 					// store.WithStorePrefix("app.yaml"),
 					// store.WithPosition("app"),
 					store.WithCodec(codec()),
 					store.WithProvider(file.New(filename)),
 				)
 				if err == nil {
-					logz.Verbose("conf.d file loaded", "file", filename)
+					logz.VerboseContext(ctx, "conf.d file loaded", "file", filename)
 					found, stop = true, true
+					w.add(true, class, filename)
 				}
 			}
 			return
@@ -222,6 +271,17 @@ func (w *conffileloader) loadSubDir(root string, app cli.App) (found bool, err e
 func (w *conffileloader) SetAlternativeConfigFile(file string) {
 	// w.folderMap["alternative"] = append(w.folderMap["alternative"], &Item{Folder: file, Watch: true})
 	w.folderMap["alternative"] = []*Item{{Folder: file, Watch: true}}
+}
+
+func (w *conffileloader) add(subdir bool, class, file string) {
+	if _, ok := w.loaded[class]; !ok {
+		w.loaded[class] = new(cli.LoadedSource)
+	}
+	if subdir {
+		w.loaded[class].Children = append(w.loaded[class].Children, file)
+	} else {
+		w.loaded[class].Main = append(w.loaded[class].Main, file)
+	}
 }
 
 func (w *conffileloader) initOnce() {
@@ -252,7 +312,7 @@ func (w *conffileloader) initOnce() {
 			// alternative config finally.
 			// At application terminating, the changes can be written back to alternative
 			// config.
-			"alternative": {{Folder: ".", Dot: true, Recursive: true, Watch: true, WriteBack: true}},
+			"alternative": {{Folder: ".", Dot: w.dot, Recursive: false, Watch: true, WriteBack: w.writeBack}},
 		}
 	}
 	if w.suffixCodecMap == nil {
