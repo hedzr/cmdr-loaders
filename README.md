@@ -10,6 +10,8 @@ This is an addon library especially for [cmdr/v2](https://github.com/hedzr/cmdr)
 
 The typical app is [cmdr-test/examples/large](https://github.com/hedzr/cmdr-tests/blob/master/examples/large).
 
+![image-20241111141228632](https://cdn.jsdelivr.net/gh/hzimg/blog-pics@master/upgit/2024/11/20241111_1731305562.png)
+
 A tiny app using `cmdr/v2` and `cmdr-loaders` is:
 
 ```go
