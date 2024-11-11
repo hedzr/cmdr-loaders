@@ -8,7 +8,9 @@ Local configuration file loaders for various file formats, such as YAML, TOML, H
 
 This is an addon library especially for [cmdr/v2](https://github.com/hedzr/cmdr).
 
-A tiny app using cmdr/v2 and cmdr-loaders is:
+The typical app is [cmdr-test/examples/large](https://github.com/hedzr/cmdr-tests/blob/master/examples/large).
+
+A tiny app using `cmdr/v2` and `cmdr-loaders` is:
 
 ```go
 package main
