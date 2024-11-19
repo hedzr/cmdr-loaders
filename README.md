@@ -158,7 +158,7 @@ See also:
 
 ## History
 
-CHANGELOGs
+CHANGELOG
 
 - security patches
 
