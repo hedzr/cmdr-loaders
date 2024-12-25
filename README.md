@@ -160,7 +160,7 @@ See also:
 
 CHANGELOG
 
-- security patches & deps upgraded
+- latest - security patches & deps upgraded
 
 ## License
 
