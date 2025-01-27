@@ -21,8 +21,6 @@ import (
 	"github.com/hedzr/cmdr/v2/pkg/dir"
 )
 
-const confSubFolderName = "conf.d"
-
 // NewConfigFileLoader returns a new instance to load local config files.
 //
 // For example,
@@ -122,7 +120,7 @@ func (w *conffileloader) LoadedSources() cli.LoadedSources {
 }
 
 func (w *conffileloader) Save(ctx context.Context) (err error) {
-	for _, class := range []string{"primary", "secondary", "alternative"} {
+	for _, class := range []string{Primary, Secondary, Alternative} {
 		for _, str := range w.folderMap[class] {
 			if str.hit && str.WriteBack && str.writeBackHandler != nil {
 				err = str.writeBackHandler.Save(ctx)
@@ -140,7 +138,7 @@ func (w *conffileloader) Load(ctx context.Context, app cli.App) (err error) {
 	// var conf = app.Store()
 
 	var found bool
-	for _, class := range []string{"primary", "secondary", "alternative"} {
+	for _, class := range []string{Primary, Secondary, Alternative} {
 		for _, it := range w.folderMap[class] {
 			folderEx := os.ExpandEnv(it.Folder)
 			logz.VerboseContext(ctx, "loading config files from Folder", "class", class, "Folder", it.Folder, "Folder-expanded", folderEx)
@@ -263,14 +261,14 @@ func (w *conffileloader) loadSubDir(ctx context.Context, class, root string, app
 // Generally user can specify a prefer config file from command-line
 // by option `--config file'.
 //
-// The point is, an alternative config file is writeable: its content
+// The point is, an Alternative config file is writeable: its content
 // will be refreshed at end of invocation on a cmdr-app. The feature
 // is called 'write-back' in cmdr.
 //
-// By this token, there is only one alternative config file in the list.
+// By this token, there is only one Alternative config file in the list.
 func (w *conffileloader) SetAlternativeConfigFile(file string) {
-	// w.folderMap["alternative"] = append(w.folderMap["alternative"], &Item{Folder: file, Watch: true})
-	w.folderMap["alternative"] = []*Item{{Folder: file, Watch: true}}
+	// w.folderMap[Alternative] = append(w.folderMap[Alternative], &Item{Folder: file, Watch: true})
+	w.folderMap[Alternative] = []*Item{{Folder: file, Watch: true}}
 }
 
 func (w *conffileloader) add(subdir bool, class, file string) {
@@ -293,15 +291,16 @@ func (w *conffileloader) initOnce() {
 			// position. It's `/etc/$APP/` on linux, or `/usr/loca/etc/$app` on macOS by
 			// Homebrew.
 			// For debugging easier in developing, we also check `./ci/etc/$app`.
-			"primary": {
+			Primary: {
 				{Folder: "/etc/$APP", Recursive: true, Watch: true},
 				{Folder: "/usr/local/etc/$APP", Recursive: true, Watch: true},
 				{Folder: "/opt/homebrew/etc/$APP", Recursive: true, Watch: true},
+				{Folder: "/usr/lib/$APP", Recursive: true, Watch: true},
 				{Folder: "./ci/etc/$APP", Recursive: true, Watch: true},
 			},
 			// Secondary configs, which may make some patches on the baseline if necessary.
 			// On linux and macOS, it can be `~/.$app` or `~/.config/$app` (`XDG_CONFIG_DIR`).
-			"secondary": {
+			Secondary: {
 				{Folder: "$HOME/.$APP", Recursive: true, Watch: true},
 				{Folder: "$CONFIG_DIR/$APP", Recursive: true, Watch: true},
 				{Folder: "./ci/config/$APP", Recursive: true, Watch: true},
@@ -312,7 +311,7 @@ func (w *conffileloader) initOnce() {
 			// alternative config finally.
 			// At application terminating, the changes can be written back to alternative
 			// config.
-			"alternative": {{Folder: ".", Dot: w.dot, Recursive: false, Watch: true, WriteBack: w.writeBack}},
+			Alternative: {{Folder: ".", Dot: w.dot, Recursive: false, Watch: true, WriteBack: w.writeBack}},
 		}
 	}
 	if w.suffixCodecMap == nil {
@@ -330,3 +329,11 @@ func (w *conffileloader) initOnce() {
 		}
 	}
 }
+
+const (
+	Primary     = "primary"
+	Secondary   = "secondary"
+	Alternative = "alternative"
+
+	confSubFolderName = "conf.d"
+)
