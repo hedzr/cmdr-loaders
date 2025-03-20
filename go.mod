@@ -53,7 +53,7 @@ go 1.23.7
 // replace github.com/hedzr/store/providers/maps => ../libs.store/providers/maps
 
 require (
-	github.com/hedzr/cmdr/v2 v2.1.1
+	github.com/hedzr/cmdr/v2 v2.1.3
 	github.com/hedzr/evendeep v1.3.1
 	github.com/hedzr/logg v0.8.1
 	github.com/hedzr/store v1.3.2
