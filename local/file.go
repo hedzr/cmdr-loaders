@@ -89,11 +89,14 @@ type conffileloader struct {
 type Item struct {
 	// In a Folder, we try to stat() '$APP.yaml' or with another suffix.
 	// But if Dot is true, '.$APP.yaml' will be stat() and loaded.
-	Folder           string
-	Dot              bool // prefix '.' to the filename?
-	Recursive        bool // following 'conf.d' subdirectory?
-	Watch            bool // enable watching routine?
-	WriteBack        bool // write-back to "alternative config" file?
+	Folder    string
+	Dot       bool // prefix '.' to the filename?
+	Recursive bool // following 'conf.d' subdirectory?
+	Watch     bool // enable watching routine?
+	WriteBack bool // write-back to "alternative config" file?
+
+	// NoFlattenKeys bool // don't flatten keys (a flattened key looks like: "app.logging.days = 7")
+
 	hit              bool // this item is valid and the config file loaded?
 	writeBackHandler writeBackHandler
 	concreteFile     string
@@ -123,6 +126,7 @@ func (w *conffileloader) Save(ctx context.Context) (err error) {
 	for _, class := range []string{Primary, Secondary, Alternative} {
 		for _, str := range w.folderMap[class] {
 			if str.hit && str.WriteBack && str.writeBackHandler != nil {
+				// logz.InfoContext(ctx, "Write-Back", "str", str.concreteFile)
 				err = str.writeBackHandler.Save(ctx)
 			}
 		}
@@ -177,7 +181,7 @@ func (w *conffileloader) loadAppConfig(ctx context.Context, class, folderExpande
 		return
 	}
 
-	// or loop the files in this folder
+	// or loop the files in this folder to find one
 	err = dir.ForFileMax(folderExpanded, 0, 1,
 		func(depth int, dirName string, fi os.DirEntry) (stop bool, err error) {
 			baseName, ext, appName := dir.Basename(fi.Name()), dir.Ext(fi.Name()), rootCmd.AppName
@@ -215,10 +219,12 @@ func (w *conffileloader) loadConfigFile(ctx context.Context, filename, ext strin
 			store.WithCodec(codec()),
 			store.WithProvider(file.New(filename,
 				file.WithWatchEnabled(it.Watch),
-				file.WithWriteBackEnabled(it.WriteBack))),
+				file.WithWriteBackEnabled(it.WriteBack),
+				// file.WithoutFlattenKeys(it.NoFlattenKeys),
+			)),
 		)
 		if err == nil {
-			if it.WriteBack {
+			if it.WriteBack && wr != nil {
 				it.writeBackHandler = wr
 				it.hit = true
 			}
@@ -316,11 +322,11 @@ func (w *conffileloader) initOnce() {
 	}
 	if w.suffixCodecMap == nil {
 		w.suffixCodecMap = map[string]func() store.Codec{
+			"toml":       func() store.Codec { return toml.New() },
 			"yaml":       func() store.Codec { return yaml.New() },
 			"yml":        func() store.Codec { return yaml.New() },
 			"json":       func() store.Codec { return json.New() },
 			"hjson":      func() store.Codec { return hjson.New() },
-			"toml":       func() store.Codec { return toml.New() },
 			"hcl":        func() store.Codec { return hcl.New() },
 			"nestedtext": func() store.Codec { return nestext.New() },
 			"txt":        func() store.Codec { return nestext.New() },
