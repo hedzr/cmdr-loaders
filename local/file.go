@@ -18,7 +18,7 @@ import (
 	"github.com/hedzr/store/providers/file"
 
 	"github.com/hedzr/cmdr/v2/cli"
-	"github.com/hedzr/cmdr/v2/pkg/dir"
+	"github.com/hedzr/is/dir"
 )
 
 // NewConfigFileLoader returns a new instance to load local config files.

@@ -11,6 +11,7 @@ toolchain go1.23.3
 require (
 	github.com/hedzr/cmdr/v2 v2.1.7
 	github.com/hedzr/evendeep v1.3.7
+	github.com/hedzr/is v0.7.10
 	github.com/hedzr/logg v0.8.7
 	github.com/hedzr/store v1.3.8
 	github.com/hedzr/store/codecs/hcl v1.3.8
@@ -27,7 +28,6 @@ require (
 require (
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hedzr/is v0.7.7 // indirect
 	github.com/hjson/hjson-go/v4 v4.4.0 // indirect
 	github.com/npillmayer/nestext v0.1.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
