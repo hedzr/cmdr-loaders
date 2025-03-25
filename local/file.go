@@ -192,7 +192,7 @@ func (w *conffileloader) loadAppConfig(ctx context.Context, class, folderExpande
 				return
 			}
 
-			logz.VerboseContext(ctx, "loading config file", "dir", dirName, "file", fi.Name())
+			// logz.VerboseContext(ctx, "loading config file", "dir", dirName, "file", fi.Name())
 			file := path.Join(dirName, fi.Name())
 			err = w.loadConfigFile(ctx, file, ext, it, app)
 			if err == nil {
@@ -206,7 +206,7 @@ func (w *conffileloader) loadAppConfig(ctx context.Context, class, folderExpande
 }
 
 func (w *conffileloader) loadConfigFile(ctx context.Context, filename, ext string, it *Item, app cli.App) (err error) {
-	logz.VerboseContext(ctx, "loading config file", "file", filename)
+	logz.VerboseContext(ctx, "try loading config file", "file", filename)
 	if strings.HasPrefix(ext, ".") {
 		ext = ext[1:]
 	}
