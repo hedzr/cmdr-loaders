@@ -211,6 +211,10 @@ func (w *conffileloader) loadConfigFile(ctx context.Context, filename, ext strin
 		ext = ext[1:]
 	}
 	if codec, ok := w.suffixCodecMap[ext]; ok {
+		// if ext == "" {
+		// 	x, _ := os.ReadFile(filename)
+		// 	logz.DebugContext(ctx, "FILE CONTENT", "file", filename, "content", string(x))
+		// }
 		var wr writeBackHandler
 		conf := app.Store()
 		wr, err = conf.Load(ctx,
@@ -331,7 +335,7 @@ func (w *conffileloader) initOnce() {
 			"nestedtext": func() store.Codec { return nestext.New() },
 			"txt":        func() store.Codec { return nestext.New() },
 			"conf":       func() store.Codec { return nestext.New() },
-			"":           func() store.Codec { return nestext.New() },
+			// "":           func() store.Codec { return nestext.New() },
 		}
 	}
 }
