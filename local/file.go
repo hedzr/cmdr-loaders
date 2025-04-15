@@ -141,6 +141,9 @@ func (w *conffileloader) Load(ctx context.Context, app cli.App) (err error) {
 
 	// var conf = app.Store()
 
+	// cwd := dir.GetCurrentDir()
+	// logz.DebugContext(ctx, "conffileloader.Load()", "cwd", cwd)
+
 	var found bool
 	for _, class := range []string{Primary, Secondary, Alternative} {
 		for _, it := range w.folderMap[class] {
@@ -256,7 +259,7 @@ func (w *conffileloader) loadSubDir(ctx context.Context, class, root string, app
 				)
 				if err == nil {
 					logz.VerboseContext(ctx, "conf.d file loaded", "file", filename)
-					found, stop = true, true
+					found, stop = true, false
 					w.add(true, class, filename)
 				}
 			}
