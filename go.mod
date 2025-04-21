@@ -9,13 +9,13 @@ toolchain go1.23.3
 // replace gopkg.in/hedzr/errors.v3 => ../../24/libs.errors
 
 require (
-	github.com/hedzr/cmdr/v2 v2.1.10
+	github.com/hedzr/cmdr/v2 v2.1.12
 	github.com/hedzr/evendeep v1.3.13
 	github.com/hedzr/is v0.7.13
 	github.com/hedzr/logg v0.8.13
 	github.com/hedzr/store v1.3.13
 	github.com/hedzr/store/codecs/hcl v1.3.13
-	github.com/hedzr/store/codecs/hjson v1.3.11
+	github.com/hedzr/store/codecs/hjson v1.3.13
 	github.com/hedzr/store/codecs/json v1.3.13
 	github.com/hedzr/store/codecs/nestext v1.3.13
 	github.com/hedzr/store/codecs/toml v1.3.13
