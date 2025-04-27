@@ -4,8 +4,8 @@ github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
-github.com/hedzr/cmdr/v2 v2.1.15 h1:nOLOJ177Pc/1AKbW0scWFJfsrdpPgm4gwOrBONnbZN0=
-github.com/hedzr/cmdr/v2 v2.1.15/go.mod h1:rhbKxBu6SvnejuZoBXWRWgVwSJM2orStGHqGgH/P1uE=
+github.com/hedzr/cmdr/v2 v2.1.16 h1:AFnSsW0Uk9R7ONQZETz28cl3slTV23LFmVrpVUeMk0Q=
+github.com/hedzr/cmdr/v2 v2.1.16/go.mod h1:rhbKxBu6SvnejuZoBXWRWgVwSJM2orStGHqGgH/P1uE=
 github.com/hedzr/evendeep v1.3.15 h1:+5RXHCdubq0Twh7zIUM55i4QMYvv+pipocmHJ8VfZtU=
 github.com/hedzr/evendeep v1.3.15/go.mod h1:qR5DvpkI/O3xn/zNTcDCHbR0ckWvd50/snBmmuJ2phQ=
 github.com/hedzr/is v0.7.15 h1:IApfSyfM1IpGerhCdLZ1Q9m6FO7Zzp4jBajRCnVeZnY=
