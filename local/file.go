@@ -57,6 +57,18 @@ func WithFolderMap(m map[string][]*Item) Opt {
 	}
 }
 
+func WithFolderMapSubcategory(categoryName string, items ...*Item) Opt {
+	return func(s *conffileloader) {
+		if s.folderMap == nil {
+			s.folderMap = make(map[string][]*Item)
+		}
+		if _, ok := s.folderMap[categoryName]; !ok {
+			s.folderMap[categoryName] = make([]*Item, 0, len(items))
+		}
+		s.folderMap[categoryName] = append(s.folderMap[categoryName], items...)
+	}
+}
+
 func WithConfDFolderName(name string) Opt {
 	return func(s *conffileloader) {
 		s.confDFolderName = name
@@ -72,6 +84,30 @@ func WithAlternateDotPrefix(dotPrefix bool) Opt {
 func WithAlternateWriteBack(b bool) Opt {
 	return func(s *conffileloader) {
 		s.writeBack = b
+	}
+}
+
+// WithMoreSuffixCodecs adds more suffix codecs to the loader.
+// The default codecs are: "toml", "json".
+//
+// The suffix is the file extension without the leading dot, like "yaml", "json", "toml", etc.
+//
+// For example:
+//
+//	import "github.com/hedzr/store/codecs/yaml"
+//	lite.WithMoreSuffixCodecs(
+//	    map[string]func()store.Codec{ "yaml": func() store.Codec { return yaml.New() } },
+//	}
+//
+// If you want to add a codec for a file extension that is not supported by default,
+// you can use this function to add it.
+//
+// You may also override the default codecs by using this function.
+func WithMoreCodecs(descibers map[string]func() store.Codec) Opt {
+	return func(s *conffileloader) {
+		for suffix, getter := range descibers {
+			s.suffixCodecMap[suffix] = getter
+		}
 	}
 }
 
