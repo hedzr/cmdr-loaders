@@ -1,0 +1,9 @@
+# CHANGELOG
+
+- v1.3.21
+  - added more `../ci/` entries for primary and secondary search pathes
+  - security patches
+
+- v1.3.19
+  - added new submodule `github.com/hedzr/cmdr-loaders/lite`
+    to get lesser dependencies to use this lite version, instead of the standard `local`
