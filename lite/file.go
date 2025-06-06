@@ -342,6 +342,8 @@ func (w *conffileloader) initOnce() {
 				{Folder: "/opt/homebrew/etc/$APP", Recursive: true, Watch: true},
 				{Folder: "/usr/lib/$APP", Recursive: true, Watch: true},
 				{Folder: "./ci/etc/$APP", Recursive: true, Watch: true},
+				{Folder: "../ci/etc/$APP", Recursive: true, Watch: true},
+				{Folder: "../../ci/etc/$APP", Recursive: true, Watch: true},
 			},
 			// Secondary configs, which may make some patches on the baseline if necessary.
 			// On linux and macOS, it can be `~/.$app` or `~/.config/$app` (`XDG_CONFIG_DIR`).
@@ -349,6 +351,8 @@ func (w *conffileloader) initOnce() {
 				{Folder: "$HOME/.$APP", Recursive: true, Watch: true},
 				{Folder: "$CONFIG_DIR/$APP", Recursive: true, Watch: true},
 				{Folder: "./ci/config/$APP", Recursive: true, Watch: true},
+				{Folder: "../ci/config/$APP", Recursive: true, Watch: true},
+				{Folder: "../../ci/config/$APP", Recursive: true, Watch: true},
 			},
 			// Alternative config, which is live config, can be read and written.
 			// Application, such as cmdr-based, reads primary config on startup, and
