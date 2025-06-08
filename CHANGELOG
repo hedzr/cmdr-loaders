@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- v1.3.22
+  - upgrade deps
+
 - v1.3.21
   - added more `../ci/` entries for primary and secondary search pathes
   - security patches
