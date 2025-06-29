@@ -9,19 +9,19 @@ toolchain go1.23.3
 // replace gopkg.in/hedzr/errors.v3 => ../../24/libs.errors
 
 require (
-	github.com/hedzr/cmdr/v2 v2.1.36
-	github.com/hedzr/evendeep v1.3.35
-	github.com/hedzr/is v0.8.35
-	github.com/hedzr/logg v0.8.35
-	github.com/hedzr/store v1.3.35
-	github.com/hedzr/store/codecs/hcl v1.3.35
-	github.com/hedzr/store/codecs/hjson v1.3.35
-	github.com/hedzr/store/codecs/json v1.3.35
-	github.com/hedzr/store/codecs/nestext v1.3.35
-	github.com/hedzr/store/codecs/toml v1.3.35
-	github.com/hedzr/store/codecs/yaml v1.3.35
-	github.com/hedzr/store/providers/env v1.3.35
-	github.com/hedzr/store/providers/file v1.3.35
+	github.com/hedzr/cmdr/v2 v2.1.37
+	github.com/hedzr/evendeep v1.3.37
+	github.com/hedzr/is v0.8.37
+	github.com/hedzr/logg v0.8.37
+	github.com/hedzr/store v1.3.37
+	github.com/hedzr/store/codecs/hcl v1.3.37
+	github.com/hedzr/store/codecs/hjson v1.3.37
+	github.com/hedzr/store/codecs/json v1.3.37
+	github.com/hedzr/store/codecs/nestext v1.3.37
+	github.com/hedzr/store/codecs/toml v1.3.37
+	github.com/hedzr/store/codecs/yaml v1.3.37
+	github.com/hedzr/store/providers/env v1.3.37
+	github.com/hedzr/store/providers/file v1.3.37
 	gopkg.in/hedzr/errors.v3 v3.3.5
 )
 
