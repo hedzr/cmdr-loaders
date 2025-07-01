@@ -9,7 +9,7 @@ toolchain go1.23.3
 // replace gopkg.in/hedzr/errors.v3 => ../../24/libs.errors
 
 require (
-	github.com/hedzr/cmdr/v2 v2.1.37
+	github.com/hedzr/cmdr/v2 v2.1.38
 	github.com/hedzr/evendeep v1.3.37
 	github.com/hedzr/is v0.8.37
 	github.com/hedzr/logg v0.8.37
