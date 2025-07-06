@@ -57,7 +57,7 @@ publish() {
 	else
 		git tag $version
 		git push origin --all && git push origin --tags
-		sleep 5
+		sleepx 5
 		git tag lite/$version
 		git push origin --all && git push origin --tags
 	fi
@@ -206,7 +206,7 @@ mk-ver() {
 # fi
 # $cmd "$@"
 
-sleep() { tip "sleeping..." && (($#)) && \sleep "$@"; }
+sleepx() { tip "sleeping..." && (($#)) && \sleep "$@"; }
 
 ######### SIMPLE BASH.SH FOOTER BEGIN #########
 
