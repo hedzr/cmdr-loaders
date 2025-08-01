@@ -184,9 +184,38 @@ jobs:
           #   LICENSE
           #   RELNOTES.md
 
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          generate_release_notes: true
+          discussion_category_name: Announcements
+          # # repo_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # # tag: ${{ github.ref }}
+          # tag_name: ${{ github.ref_name }}
+          # name: ${{ env.TAG_NAME }}
+          # # overwrite: true
+          # overwrite_files: true
+          file_glob: true
+          append_body: true
+          draft: false
+          prerelease: false
+          preserve_order: true
+          # body_path: relnotes.md
+          body: |
+            cmdr.loaders (lite & local) provides optional external sources loaders for loading the app settings into cmdr.v2. This is ready for GNU spec, XDG spec, and works on linxu, macOS and windows.
 
-
-
-
-
+            ${{ github.event.head_commit.message }}
+          # files: |
+          #   ./*.zip
+          # # body: |
+          # #   ${{ steps.read_release.outputs.RELEASE_BODY }}
+          # body: |
+          #   ${{ steps.read_release_notes_0.outputs.RELEASE_BODY }}
+          # body_path: ${{ github.workspace }}-CHANGELOG.txt
+          # body_path: RELNOTES.md
+          # files: |
+          #   LICENSE
+          #   RELNOTES.md
 
