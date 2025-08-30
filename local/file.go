@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/hedzr/cmdr-loaders/common"
 	logz "github.com/hedzr/logg/slog"
 
 	"github.com/hedzr/store"
@@ -51,19 +52,19 @@ func NewConfigFileLoader(opts ...Opt) *conffileloader {
 
 type Opt func(s *conffileloader)
 
-func WithFolderMap(m map[string][]*Item) Opt {
+func WithFolderMap(m map[string][]*common.Item) Opt {
 	return func(s *conffileloader) {
 		s.folderMap = m
 	}
 }
 
-func WithFolderMapSubcategory(categoryName string, items ...*Item) Opt {
+func WithFolderMapSubcategory(categoryName string, items ...*common.Item) Opt {
 	return func(s *conffileloader) {
 		if s.folderMap == nil {
-			s.folderMap = make(map[string][]*Item)
+			s.folderMap = make(map[string][]*common.Item)
 		}
 		if _, ok := s.folderMap[categoryName]; !ok {
-			s.folderMap[categoryName] = make([]*Item, 0, len(items))
+			s.folderMap[categoryName] = make([]*common.Item, 0, len(items))
 		}
 		s.folderMap[categoryName] = append(s.folderMap[categoryName], items...)
 	}
@@ -112,7 +113,7 @@ func WithMoreCodecs(descibers map[string]func() store.Codec) Opt {
 }
 
 type conffileloader struct {
-	folderMap       map[string][]*Item
+	folderMap       map[string][]*common.Item
 	suffixCodecMap  map[string]func() store.Codec
 	confDFolderName string
 
@@ -122,38 +123,6 @@ type conffileloader struct {
 	loaded cli.LoadedSources
 }
 
-type Item struct {
-	// In a Folder, we try to stat() '$APP.yaml' or with another suffix.
-	// But if Dot is true, '.$APP.yaml' will be stat() and loaded.
-	Folder    string
-	Dot       bool // prefix '.' to the filename?
-	Recursive bool // following 'conf.d' subdirectory?
-	Watch     bool // enable watching routine?
-	WriteBack bool // write-back to "alternative config" file?
-
-	// NoFlattenKeys bool // don't flatten keys (a flattened key looks like: "app.logging.days = 7")
-
-	hit              bool // this item is valid and the config file loaded?
-	writeBackHandler writeBackHandler
-	concreteFile     string
-}
-
-type Loadable interface {
-	Load(ctx context.Context, app cli.App) (err error)
-}
-
-type SingleFileLoadable interface {
-	LoadFile(ctx context.Context, filename string, app cli.App) (err error)
-}
-
-type writeBackHandler interface {
-	Save(ctx context.Context) error
-}
-
-type QueryLoadedSources interface {
-	LoadedSources() cli.LoadedSources
-}
-
 func (w *conffileloader) LoadedSources() cli.LoadedSources {
 	return w.loaded
 }
@@ -161,9 +130,9 @@ func (w *conffileloader) LoadedSources() cli.LoadedSources {
 func (w *conffileloader) Save(ctx context.Context) (err error) {
 	for _, class := range []string{Primary, Secondary, Alternative} {
 		for _, str := range w.folderMap[class] {
-			if str.hit && str.WriteBack && str.writeBackHandler != nil {
+			if h := str.WriteBackHandler(); str.Hit() && str.WriteBack && h != nil {
 				// logz.InfoContext(ctx, "Write-Back", "str", str.concreteFile)
-				err = str.writeBackHandler.Save(ctx)
+				err = h.Save(ctx)
 			}
 		}
 	}
@@ -203,10 +172,10 @@ func (w *conffileloader) Load(ctx context.Context, app cli.App) (err error) {
 }
 
 func (w *conffileloader) LoadFile(ctx context.Context, filename string, app cli.App) (err error) {
-	return w.loadConfigFile(ctx, filename, path.Ext(filename), &Item{Watch: true, WriteBack: false}, app)
+	return w.loadConfigFile(ctx, filename, path.Ext(filename), &common.Item{Watch: true, WriteBack: false}, app)
 }
 
-func (w *conffileloader) loadAppConfig(ctx context.Context, class, folderExpanded string, it *Item, app cli.App) (found bool, err error) {
+func (w *conffileloader) loadAppConfig(ctx context.Context, class, folderExpanded string, it *common.Item, app cli.App) (found bool, err error) {
 	rootCmd := app.RootCommand()
 
 	// if the folderExpanded is a regular file, load it directly
@@ -244,17 +213,15 @@ func (w *conffileloader) loadAppConfig(ctx context.Context, class, folderExpande
 	return
 }
 
-func (w *conffileloader) loadConfigFile(ctx context.Context, filename, ext string, it *Item, app cli.App) (err error) {
+func (w *conffileloader) loadConfigFile(ctx context.Context, filename, ext string, it *common.Item, app cli.App) (err error) {
 	logz.VerboseContext(ctx, "try loading config file", "file", filename)
-	if strings.HasPrefix(ext, ".") {
-		ext = ext[1:]
-	}
+	strings.TrimPrefix(ext, ".")
 	if codec, ok := w.suffixCodecMap[ext]; ok {
 		// if ext == "" {
 		// 	x, _ := os.ReadFile(filename)
 		// 	logz.DebugContext(ctx, "FILE CONTENT", "file", filename, "content", string(x))
 		// }
-		var wr writeBackHandler
+		var wr common.WriteBackHandler
 		conf := app.Store()
 		wr, err = conf.Load(ctx,
 			// store.WithStorePrefix("app.yaml"),
@@ -268,10 +235,10 @@ func (w *conffileloader) loadConfigFile(ctx context.Context, filename, ext strin
 		)
 		if err == nil {
 			if it.WriteBack && wr != nil {
-				it.writeBackHandler = wr
-				it.hit = true
+				it.SetWriteBackHandler(wr)
+				it.SetHit(true)
 			}
-			it.concreteFile = filename
+			it.SetConcreteFile(filename)
 		}
 	}
 	return
@@ -281,9 +248,7 @@ func (w *conffileloader) loadSubDir(ctx context.Context, class, root string, app
 	err = dir.ForFile(root,
 		func(depth int, dirName string, fi os.DirEntry) (stop bool, err error) {
 			ext := dir.Ext(fi.Name())
-			if strings.HasPrefix(ext, ".") {
-				ext = ext[1:]
-			}
+			strings.TrimPrefix(ext, ".")
 
 			if codec, ok := w.suffixCodecMap[ext]; ok {
 				filename := path.Join(dirName, fi.Name())
@@ -317,7 +282,7 @@ func (w *conffileloader) loadSubDir(ctx context.Context, class, root string, app
 // By this token, there is only one Alternative config file in the list.
 func (w *conffileloader) SetAlternativeConfigFile(file string) {
 	// w.folderMap[Alternative] = append(w.folderMap[Alternative], &Item{Folder: file, Watch: true})
-	w.folderMap[Alternative] = []*Item{{Folder: file, Watch: true}}
+	w.folderMap[Alternative] = []*common.Item{{Folder: file, Watch: true}}
 }
 
 func (w *conffileloader) add(subdir bool, class, file string) {
@@ -333,39 +298,7 @@ func (w *conffileloader) add(subdir bool, class, file string) {
 
 func (w *conffileloader) initOnce() {
 	if w.folderMap == nil {
-		w.folderMap = map[string][]*Item{
-			// Primary configs, which define the baseline of app config, are generally
-			// bundled with application release.
-			// App installer will dispatch primary config files to the standard directory
-			// position. It's `/etc/$APP/` on linux, or `/usr/loca/etc/$app` on macOS by
-			// Homebrew.
-			// For debugging easier in developing, we also check `./ci/etc/$app`.
-			Primary: {
-				{Folder: "/etc/$APP", Recursive: true, Watch: true},
-				{Folder: "/usr/local/etc/$APP", Recursive: true, Watch: true},
-				{Folder: "/opt/homebrew/etc/$APP", Recursive: true, Watch: true},
-				{Folder: "/usr/lib/$APP", Recursive: true, Watch: true},
-				{Folder: "./ci/etc/$APP", Recursive: true, Watch: true},
-				{Folder: "../ci/etc/$APP", Recursive: true, Watch: true},
-				{Folder: "../../ci/etc/$APP", Recursive: true, Watch: true},
-			},
-			// Secondary configs, which may make some patches on the baseline if necessary.
-			// On linux and macOS, it can be `~/.$app` or `~/.config/$app` (`XDG_CONFIG_DIR`).
-			Secondary: {
-				{Folder: "$HOME/.$APP", Recursive: true, Watch: true},
-				{Folder: "$CONFIG_DIR/$APP", Recursive: true, Watch: true},
-				{Folder: "./ci/config/$APP", Recursive: true, Watch: true},
-				{Folder: "../ci/config/$APP", Recursive: true, Watch: true},
-				{Folder: "../../ci/config/$APP", Recursive: true, Watch: true},
-			},
-			// Alternative config, which is live config, can be read and written.
-			// Application, such as cmdr-based, reads primary config on startup, and
-			// patches it with secondary config, and updates these configs with
-			// alternative config finally.
-			// At application terminating, the changes can be written back to alternative
-			// config.
-			Alternative: {{Folder: ".", Dot: w.dot, Recursive: false, Watch: true, WriteBack: w.writeBack}},
-		}
+		w.folderMap = common.DefaultFolderMap(w.dot, w.writeBack)
 	}
 	if w.suffixCodecMap == nil {
 		w.suffixCodecMap = map[string]func() store.Codec{
