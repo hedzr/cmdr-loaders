@@ -9,19 +9,19 @@ toolchain go1.24.5
 // replace gopkg.in/hedzr/errors.v3 => ../../24/libs.errors
 
 require (
-	github.com/hedzr/cmdr/v2 v2.1.65
-	github.com/hedzr/evendeep v1.3.65
-	github.com/hedzr/is v0.8.65
-	github.com/hedzr/logg v0.8.65
-	github.com/hedzr/store v1.3.65
-	github.com/hedzr/store/codecs/hcl v1.3.65
-	github.com/hedzr/store/codecs/hjson v1.3.65
-	github.com/hedzr/store/codecs/json v1.3.65
-	github.com/hedzr/store/codecs/nestext v1.3.65
-	github.com/hedzr/store/codecs/toml v1.3.65
-	github.com/hedzr/store/codecs/yaml v1.3.65
-	github.com/hedzr/store/providers/env v1.3.65
-	github.com/hedzr/store/providers/file v1.3.65
+	github.com/hedzr/cmdr/v2 v2.1.66
+	github.com/hedzr/evendeep v1.3.66
+	github.com/hedzr/is v0.8.66
+	github.com/hedzr/logg v0.8.66
+	github.com/hedzr/store v1.3.66
+	github.com/hedzr/store/codecs/hcl v1.3.66
+	github.com/hedzr/store/codecs/hjson v1.3.66
+	github.com/hedzr/store/codecs/json v1.3.66
+	github.com/hedzr/store/codecs/nestext v1.3.66
+	github.com/hedzr/store/codecs/toml v1.3.66
+	github.com/hedzr/store/codecs/yaml v1.3.66
+	github.com/hedzr/store/providers/env v1.3.66
+	github.com/hedzr/store/providers/file v1.3.66
 	gopkg.in/hedzr/errors.v3 v3.3.5
 )
 
@@ -36,13 +36,13 @@ require (
 	github.com/npillmayer/nestext v0.1.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/zclconf/go-cty v1.17.0 // indirect
-	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
-	golang.org/x/mod v0.30.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/term v0.37.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
-	golang.org/x/tools v0.39.0 // indirect
+	golang.org/x/exp v0.0.0-20251209150349-8475f28825e9 // indirect
+	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/term v0.38.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/tools v0.40.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
